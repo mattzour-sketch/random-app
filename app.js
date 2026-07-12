@@ -302,15 +302,29 @@
     });
   });
 
+  var PRESET_EXERCISES = [
+    "Bench press", "Incline bench press", "Decline bench press",
+    "Dumbbell press", "Incline dumbbell press", "Chest fly", "Cable fly", "Push-up",
+    "Deadlift", "Romanian deadlift", "T-bar row", "Barbell row", "Dumbbell row",
+    "Lat pulldown", "Pull-up", "Seated cable row",
+    "Overhead press", "Shoulder press", "Lateral raise", "Front raise", "Rear delt fly", "Shrugs",
+    "Squat", "Leg press", "Leg extension", "Leg curl", "Lunges", "Bulgarian split squat",
+    "Calf raise", "Hip thrust",
+    "Biceps curl", "Hammer curl", "Triceps pushdown", "Triceps extension", "Dips",
+    "Plank", "Crunches"
+  ];
+
   function updateExerciseDatalist(sorted){
-    var names = Array.from(new Set(sorted.map(function(r){return r.cvik;}).filter(Boolean))).sort();
-    cvikListEl.innerHTML = names.map(function(n){ return "<option value=\""+esc(n)+"\"></option>"; }).join("");
+    var loggedNames = Array.from(new Set(sorted.map(function(r){return r.cvik;}).filter(Boolean)));
+    var allNames = Array.from(new Set(PRESET_EXERCISES.concat(loggedNames))).sort();
+    cvikListEl.innerHTML = allNames.map(function(n){ return "<option value=\""+esc(n)+"\"></option>"; }).join("");
 
     var exSelect = document.getElementById("gymChartExercise");
     var prevSelected = exSelect.value;
-    exSelect.innerHTML = names.map(function(n){ return "<option value=\""+esc(n)+"\">"+esc(n)+"</option>"; }).join("");
-    if(names.length){
-      exSelect.value = names.indexOf(prevSelected)>-1 ? prevSelected : names[names.length-1];
+    var chartNames = loggedNames.sort();
+    exSelect.innerHTML = chartNames.map(function(n){ return "<option value=\""+esc(n)+"\">"+esc(n)+"</option>"; }).join("");
+    if(chartNames.length){
+      exSelect.value = chartNames.indexOf(prevSelected)>-1 ? prevSelected : chartNames[chartNames.length-1];
     }
   }
 
@@ -328,6 +342,35 @@
     a.href = url; a.download = "gym_export_"+todayISO()+".csv";
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  });
+
+  function downloadBackupFile(content, filename){
+    var blob = new Blob([content], {type:"application/json;charset=utf-8;"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById("gymBtnShare").addEventListener("click", function(){
+    var filename = "gym_zaloha_" + todayISO() + ".json";
+    var json = JSON.stringify({ gym: gymData, exportedAt: new Date().toISOString() }, null, 2);
+
+    var file;
+    try{ file = new File([json], filename, {type:"application/json"}); }catch(e){ file = null; }
+
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({
+        files: [file],
+        title: "Gym Progress záloha",
+        text: "Záloha záznamů cvičení (" + todayISO() + ")"
+      }).catch(function(e){
+        if(e && e.name !== "AbortError") downloadBackupFile(json, filename);
+      });
+    } else {
+      downloadBackupFile(json, filename);
+    }
   });
 
   // ---------- personal records ----------
