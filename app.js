@@ -124,13 +124,78 @@
   // ---------- form ----------
   var gymForm = document.getElementById("gymForm");
   var gfDatum = document.getElementById("gf_datum");
-  var gfCvik = document.getElementById("gf_cvik");
   var gfPoznamka = document.getElementById("gf_poznamka");
   var seriesRowsEl = document.getElementById("seriesRows");
   var gymSubmitBtn = document.getElementById("gymSubmitBtn");
   var gymCancelEditBtn = document.getElementById("gymCancelEditBtn");
   var gymFormTitle = document.getElementById("gymFormTitle");
-  var cvikListEl = document.getElementById("cvikList");
+  var gfCvikSelect = document.getElementById("gf_cvik_select");
+  var gfCvikCustom = document.getElementById("gf_cvik_custom");
+  var CUSTOM_CVIK = "__custom__";
+
+  var EXERCISE_GROUPS = {
+    "Prsa": ["Bench press", "Incline bench press", "Decline bench press", "Dumbbell press", "Incline dumbbell press", "Chest fly", "Cable fly", "Push-up"],
+    "Záda": ["Deadlift", "Romanian deadlift", "T-bar row", "Barbell row", "Dumbbell row", "Lat pulldown", "Pull-up", "Seated cable row"],
+    "Ramena": ["Overhead press", "Shoulder press", "Lateral raise", "Front raise", "Rear delt fly", "Shrugs"],
+    "Nohy": ["Squat", "Leg press", "Leg extension", "Leg curl", "Lunges", "Bulgarian split squat", "Calf raise", "Hip thrust"],
+    "Ruce": ["Biceps curl", "Hammer curl", "Triceps pushdown", "Triceps extension", "Dips"],
+    "Core": ["Plank", "Crunches"]
+  };
+  var GROUP_ORDER = ["Prsa", "Záda", "Ramena", "Nohy", "Ruce", "Core"];
+
+  function allPresetExercises(){
+    var out = [];
+    GROUP_ORDER.forEach(function(g){ out = out.concat(EXERCISE_GROUPS[g]); });
+    return out;
+  }
+
+  function buildCvikOptions(loggedNames){
+    var preset = allPresetExercises();
+    var extra = (loggedNames||[]).filter(function(n){ return preset.indexOf(n)===-1; }).sort();
+    var html = "<option value=\"\" disabled selected>Vyber cvik…</option>";
+    GROUP_ORDER.forEach(function(g){
+      html += "<optgroup label=\""+esc(g)+"\">";
+      EXERCISE_GROUPS[g].forEach(function(n){ html += "<option value=\""+esc(n)+"\">"+esc(n)+"</option>"; });
+      html += "</optgroup>";
+    });
+    if(extra.length){
+      html += "<optgroup label=\"Dříve použité\">";
+      extra.forEach(function(n){ html += "<option value=\""+esc(n)+"\">"+esc(n)+"</option>"; });
+      html += "</optgroup>";
+    }
+    html += "<option value=\""+CUSTOM_CVIK+"\">➕ Vlastní cvik…</option>";
+    return html;
+  }
+
+  function toggleCustomCvik(show){
+    gfCvikCustom.style.display = show ? "block" : "none";
+    gfCvikCustom.required = show;
+    if(show) gfCvikCustom.focus();
+  }
+  gfCvikSelect.addEventListener("change", function(){
+    toggleCustomCvik(gfCvikSelect.value === CUSTOM_CVIK);
+  });
+
+  function getCvikValue(){
+    return gfCvikSelect.value === CUSTOM_CVIK ? gfCvikCustom.value.trim() : gfCvikSelect.value;
+  }
+  function setCvikValue(name){
+    var matched = Array.from(gfCvikSelect.options).some(function(opt){ return opt.value === name; });
+    if(name && matched){
+      gfCvikSelect.value = name;
+      toggleCustomCvik(false);
+      gfCvikCustom.value = "";
+    } else if(name){
+      gfCvikSelect.value = CUSTOM_CVIK;
+      toggleCustomCvik(true);
+      gfCvikCustom.value = name;
+    } else {
+      gfCvikSelect.selectedIndex = 0;
+      toggleCustomCvik(false);
+      gfCvikCustom.value = "";
+    }
+  }
+  gfCvikSelect.innerHTML = buildCvikOptions([]);
 
   function addSerieRow(vaha, opak){
     var row = document.createElement("div");
@@ -160,6 +225,7 @@
     gymEditingId = null;
     gymForm.reset();
     gfDatum.value = todayISO();
+    setCvikValue("");
     seriesRowsEl.innerHTML = "";
     addSerieRow();
     gymFormTitle.textContent = "Nový záznam";
@@ -174,10 +240,13 @@
       return { vaha: num(row.querySelector(".serie-vaha").value), opakovani: num(row.querySelector(".serie-opak").value) };
     }).filter(function(s){ return s.vaha!=null || s.opakovani!=null; });
 
+    var cvikName = getCvikValue();
+    if(!cvikName){ gfCvikCustom.focus(); return; }
+
     var rec = {
       id: gymEditingId || uid(),
       datum: gfDatum.value || todayISO(),
-      cvik: gfCvik.value.trim(),
+      cvik: cvikName,
       serie: serie,
       poznamka: gfPoznamka.value.trim()
     };
@@ -200,7 +269,7 @@
     if(!rec) return;
     gymEditingId = id;
     gfDatum.value = rec.datum || todayISO();
-    gfCvik.value = rec.cvik || "";
+    setCvikValue(rec.cvik || "");
     gfPoznamka.value = rec.poznamka || "";
     seriesRowsEl.innerHTML = "";
     (rec.serie && rec.serie.length ? rec.serie : [{vaha:null,opakovani:null}]).forEach(function(s){ addSerieRow(s.vaha, s.opakovani); });
@@ -302,22 +371,12 @@
     });
   });
 
-  var PRESET_EXERCISES = [
-    "Bench press", "Incline bench press", "Decline bench press",
-    "Dumbbell press", "Incline dumbbell press", "Chest fly", "Cable fly", "Push-up",
-    "Deadlift", "Romanian deadlift", "T-bar row", "Barbell row", "Dumbbell row",
-    "Lat pulldown", "Pull-up", "Seated cable row",
-    "Overhead press", "Shoulder press", "Lateral raise", "Front raise", "Rear delt fly", "Shrugs",
-    "Squat", "Leg press", "Leg extension", "Leg curl", "Lunges", "Bulgarian split squat",
-    "Calf raise", "Hip thrust",
-    "Biceps curl", "Hammer curl", "Triceps pushdown", "Triceps extension", "Dips",
-    "Plank", "Crunches"
-  ];
-
   function updateExerciseDatalist(sorted){
     var loggedNames = Array.from(new Set(sorted.map(function(r){return r.cvik;}).filter(Boolean)));
-    var allNames = Array.from(new Set(PRESET_EXERCISES.concat(loggedNames))).sort();
-    cvikListEl.innerHTML = allNames.map(function(n){ return "<option value=\""+esc(n)+"\"></option>"; }).join("");
+
+    var currentCvik = getCvikValue();
+    gfCvikSelect.innerHTML = buildCvikOptions(loggedNames);
+    setCvikValue(currentCvik);
 
     var exSelect = document.getElementById("gymChartExercise");
     var prevSelected = exSelect.value;
