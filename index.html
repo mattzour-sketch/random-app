@@ -67,16 +67,31 @@
   </section>
 
   <section class="card">
+    <h2>Tělo (pro odhad síly)</h2>
+    <label>Pohlaví</label>
+    <select id="bp_pohlavi">
+      <option value="muz">Muž</option>
+      <option value="zena">Žena</option>
+    </select>
+    <label>Váha (kg)</label>
+    <input type="text" inputmode="decimal" id="bp_vaha" placeholder="např. 82" />
+    <div class="actions-row">
+      <button type="button" class="ghost small" id="btnSaveBody">Uložit</button>
+    </div>
+  </section>
+
+  <section class="card">
     <h2>Osobní rekordy</h2>
     <div class="table-wrap">
       <table id="prTable">
         <thead>
-          <tr><th>Cvik</th><th>Nejtěžší série</th><th>Odhad 1RM</th><th>Datum</th></tr>
+          <tr><th>Cvik</th><th>Nejtěžší série</th><th>Odhad 1RM</th><th>Datum</th><th>Odhad síly</th></tr>
         </thead>
         <tbody id="prTbody"></tbody>
       </table>
     </div>
     <div class="empty" id="prEmptyMsg" style="display:none;">Zatím žádná data pro rekordy.</div>
+    <div class="hint" style="margin-top:10px; font-size:11px; color:var(--muted);">"Odhad síly" u dřepu, bench pressu, mrtvého tahu a tlaku nad hlavu je orientační srovnání s benchmarky Tima Henriquese (Decent/Good/Great podle tělesné váhy a pohlaví) — ne vědecky odvozený percentil populace.</div>
   </section>
 
   <section class="card">

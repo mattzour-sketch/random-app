@@ -433,6 +433,74 @@
   });
 
   // ---------- personal records ----------
+  // ---------- body profile (for strength-level estimate) ----------
+  var BODY_KEY = "gym_telo_v1";
+  var bpPohlavi = document.getElementById("bp_pohlavi");
+  var bpVaha = document.getElementById("bp_vaha");
+
+  function loadBody(){
+    try{
+      var raw = localStorage.getItem(BODY_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function saveBody(b){
+    try{ localStorage.setItem(BODY_KEY, JSON.stringify(b)); }catch(e){}
+  }
+  var bodyProfile = loadBody();
+  if(bodyProfile){
+    bpPohlavi.value = bodyProfile.pohlavi || "muz";
+    bpVaha.value = bodyProfile.vaha ?? "";
+  }
+  document.getElementById("btnSaveBody").addEventListener("click", function(){
+    bodyProfile = { pohlavi: bpPohlavi.value, vaha: num(bpVaha.value) };
+    saveBody(bodyProfile);
+    renderGym();
+  });
+
+  // Bodyweight-multiplier benchmarks (Decent / Good / Great) by Tim Henriques,
+  // via Legion Athletics - an approximate reference, not a real population percentile.
+  var STRENGTH_STANDARDS = {
+    muz: {
+      "squat": [1.25, 1.75, 2.5],
+      "bench press": [0.75, 1.0, 1.5],
+      "deadlift": [1.75, 2.25, 3.25],
+      "overhead press": [0.5, 0.75, 1.0]
+    },
+    zena: {
+      "squat": [0.75, 1.25, 1.75],
+      "bench press": [0.4, 0.6, 0.9],
+      "deadlift": [1.0, 1.5, 2.1],
+      "overhead press": [0.3, 0.5, 0.75]
+    }
+  };
+
+  function strengthLevelPercent(ratio, thresholds){
+    var pts = [0, thresholds[0], thresholds[1], thresholds[2]];
+    var pct = [0, 33, 66, 100];
+    if(ratio<=0) return 0;
+    for(var i=0;i<pts.length-1;i++){
+      if(ratio <= pts[i+1]){
+        var frac = (ratio-pts[i]) / (pts[i+1]-pts[i]);
+        return pct[i] + frac*(pct[i+1]-pct[i]);
+      }
+    }
+    var slope = (pct[3]-pct[2]) / (pts[3]-pts[2]);
+    return pct[3] + (ratio-pts[3])*slope;
+  }
+
+  function strengthEstimate(cvik, rm){
+    if(!bodyProfile || !bodyProfile.vaha || !cvik) return null;
+    var key = cvik.trim().toLowerCase();
+    var table = STRENGTH_STANDARDS[bodyProfile.pohlavi || "muz"];
+    if(!table || !table[key]) return null;
+    var ratio = rm / bodyProfile.vaha;
+    var pct = strengthLevelPercent(ratio, table[key]);
+    var tier = pct>=100 ? "great" : (pct>=66 ? "good" : (pct>=33 ? "decent" : "low"));
+    var tierLabel = pct>=100 ? "nad Great" : (pct>=66 ? "Good→Great" : (pct>=33 ? "Decent→Good" : "pod Decent"));
+    return { pct: pct, tier: tier, label: tierLabel };
+  }
+
   function renderPRs(sorted){
     var prBody = document.getElementById("prTbody");
     var prEmpty = document.getElementById("prEmptyMsg");
@@ -451,10 +519,13 @@
     prEmpty.style.display = names.length ? "none" : "block";
     prBody.innerHTML = names.map(function(n){
       var pr = byExercise[n];
+      var est = strengthEstimate(n, pr.rm);
+      var estCell = est ? "<span class=\"strength-badge tier-"+est.tier+"\">"+Math.round(est.pct)+" %</span> <span class=\"hint\">("+est.label+")</span>" : "<span class=\"hint\">–</span>";
       return "<tr><td>"+esc(n)+"</td>"+
         "<td>"+pr.vaha+"kg"+(pr.opakovani!=null ? " × "+pr.opakovani : "")+"</td>"+
         "<td>"+Math.round(pr.rm)+" kg</td>"+
-        "<td>"+fmtDate(pr.datum)+"</td></tr>";
+        "<td>"+fmtDate(pr.datum)+"</td>"+
+        "<td>"+estCell+"</td></tr>";
     }).join("");
   }
 

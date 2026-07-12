@@ -77,6 +77,13 @@ button.small{padding:8px 12px; font-size:13px;}
 button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 button.ghost.active{background:var(--accent-soft); border-color:var(--accent); color:var(--accent-strong);}
 
+.hint{color:var(--muted); font-size:12px;}
+.strength-badge{font-weight:700;}
+.strength-badge.tier-great{color:var(--accent-strong);}
+.strength-badge.tier-good{color:var(--accent);}
+.strength-badge.tier-decent{color:var(--training);}
+.strength-badge.tier-low{color:var(--muted);}
+
 .actions-row{display:flex; flex-direction:column; gap:8px; margin-top:14px;}
 
 .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
