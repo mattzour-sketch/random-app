@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Gym Progress</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#3d6b52" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Gym" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="style.css" />
+
+<div class="app">
+  <div id="diagBanner" style="display:none; background:var(--danger); color:#fff; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:13px;"></div>
+
+  <header class="top">
+    <h1>Gym Progress</h1>
+    <button type="button" class="ghost small" id="themeToggleBtn">☀ Světlý</button>
+  </header>
+
+  <section class="card">
+    <h2 id="gymFormTitle">Nový záznam</h2>
+    <form id="gymForm">
+      <label>Datum</label>
+      <input type="date" id="gf_datum" required />
+
+      <label>Cvik</label>
+      <input type="text" id="gf_cvik" list="cvikList" placeholder="např. Bench press" required />
+      <datalist id="cvikList"></datalist>
+
+      <label>Série (váha × opakování)</label>
+      <div id="seriesRows"></div>
+      <button type="button" class="ghost small" id="btnAddSerie">+ Přidat sérii</button>
+
+      <label>Poznámka</label>
+      <textarea id="gf_poznamka" placeholder="pocit, RPE…"></textarea>
+
+      <div class="actions-row">
+        <button type="submit" class="primary" id="gymSubmitBtn">Uložit záznam</button>
+        <button type="button" class="ghost" id="gymCancelEditBtn" style="display:none;">Zrušit úpravu</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Historie <span class="count" id="gymRowCount"></span></h2>
+    <div class="toolbar">
+      <button class="ghost small" id="gymBtnExport">Export CSV</button>
+      <span class="spacer"></span>
+      <button class="ghost small" id="gymBtnDeleteSelected" style="display:none; color:var(--danger); border-color:var(--danger);">Smazat vybrané (<span id="gymSelCount">0</span>)</button>
+    </div>
+    <div class="table-wrap">
+      <table id="gymTable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="gymSelectAllChk" /></th>
+            <th>Datum</th><th>Cvik</th><th>Série</th><th>Objem</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="gymTbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="gymEmptyMsg" style="display:none;">Zatím žádné záznamy. Zadej první nahoře.</div>
+  </section>
+
+  <section class="card">
+    <h2>Osobní rekordy</h2>
+    <div class="table-wrap">
+      <table id="prTable">
+        <thead>
+          <tr><th>Cvik</th><th>Nejtěžší série</th><th>Odhad 1RM</th><th>Datum</th></tr>
+        </thead>
+        <tbody id="prTbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="prEmptyMsg" style="display:none;">Zatím žádná data pro rekordy.</div>
+  </section>
+
+  <section class="card">
+    <h2>Progres cviku</h2>
+    <div class="toolbar" style="margin-bottom:10px;">
+      <select id="gymChartExercise" style="max-width:180px;"></select>
+      <button class="ghost small gym-metric-btn active" data-gym-metric="top">Nejtěžší série</button>
+      <button class="ghost small gym-metric-btn" data-gym-metric="volume">Objem</button>
+    </div>
+    <div class="chart-wrap" id="gymChartWrap"></div>
+  </section>
+
+  <div class="toast" id="toast" style="display:none;">
+    <span id="toastMsg"></span>
+    <button type="button" id="toastUndo">Zpět</button>
+  </div>
+</div>
+
+<script src="app.js" defer></script>
+<script>
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+</script>
