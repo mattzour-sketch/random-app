@@ -22,6 +22,7 @@
 
   <section class="card">
     <h2 id="gymFormTitle">Nový záznam</h2>
+    <div id="tplQueueBar" style="display:none;"></div>
     <form id="gymForm">
       <label>Datum</label>
       <input type="date" id="gf_datum" required />
@@ -42,6 +43,23 @@
         <button type="button" class="ghost" id="gymCancelEditBtn" style="display:none;">Zrušit úpravu</button>
       </div>
     </form>
+  </section>
+
+  <section class="card">
+    <h2>Šablony tréninků</h2>
+    <div id="tplList"></div>
+    <button type="button" class="ghost small" id="btnNewTpl">+ Nová šablona</button>
+    <div id="tplEditor" style="display:none; margin-top:12px;">
+      <label>Název šablony</label>
+      <input type="text" id="tpl_nazev" placeholder="např. Upper A" />
+      <label>Cviky (v pořadí)</label>
+      <div id="tplRows"></div>
+      <button type="button" class="ghost small" id="btnTplAddCvik">+ Přidat cvik</button>
+      <div class="actions-row">
+        <button type="button" class="primary" id="btnTplSave">Uložit šablonu</button>
+        <button type="button" class="ghost" id="btnTplCancel">Zrušit</button>
+      </div>
+    </div>
   </section>
 
   <section class="card">

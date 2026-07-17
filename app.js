@@ -71,6 +71,7 @@
     toastMsgEl.textContent = msg;
     toastEl.style.display = "flex";
     var freshBtn = toastUndoBtn.cloneNode(true);
+    freshBtn.style.display = "";
     toastUndoBtn.parentNode.replaceChild(freshBtn, toastUndoBtn);
     toastUndoBtn = freshBtn;
     toastUndoBtn.addEventListener("click", function(){
@@ -79,6 +80,13 @@
       undoFn();
     });
     toastTimer = setTimeout(function(){ toastEl.style.display = "none"; }, 6000);
+  }
+  function showInfoToast(msg){
+    clearTimeout(toastTimer);
+    toastMsgEl.textContent = msg;
+    toastUndoBtn.style.display = "none";
+    toastEl.style.display = "flex";
+    toastTimer = setTimeout(function(){ toastEl.style.display = "none"; }, 5000);
   }
 
   // ---------- data ----------
@@ -250,6 +258,8 @@
       serie: serie,
       poznamka: gfPoznamka.value.trim()
     };
+    var isNew = !gymEditingId;
+    var prBeaten = isNew ? checkNewPR(rec) : null;
     if(gymEditingId){
       var idx = gymData.findIndex(function(r){return r.id===gymEditingId;});
       if(idx>-1) gymData[idx]=rec;
@@ -259,8 +269,44 @@
     saveGym(gymData);
     resetGymForm();
     renderGym();
-    window.scrollTo({top:0, behavior:"smooth"});
+    if(isNew && tplQueue){
+      advanceTplQueue();
+    } else {
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+    if(prBeaten){
+      showInfoToast("🏆 Nový rekord: "+prBeaten.cvik+" — odhad 1RM "+Math.round(prBeaten.rm)+" kg (předtím "+Math.round(prBeaten.prev)+" kg)");
+    }
   });
+
+  // Best estimated 1RM for an exercise across existing records; used to
+  // detect a beaten PR before the new record is added.
+  function bestRMFor(cvik){
+    var best = null;
+    gymData.forEach(function(r){
+      if(r.cvik !== cvik) return;
+      (r.serie||[]).forEach(function(s){
+        if(s.vaha==null) return;
+        var rm = est1RM(s.vaha, s.opakovani==null?1:s.opakovani);
+        if(best==null || rm > best) best = rm;
+      });
+    });
+    return best;
+  }
+  function checkNewPR(rec){
+    var prev = bestRMFor(rec.cvik);
+    if(prev == null) return null;
+    var newBest = null;
+    (rec.serie||[]).forEach(function(s){
+      if(s.vaha==null) return;
+      var rm = est1RM(s.vaha, s.opakovani==null?1:s.opakovani);
+      if(newBest==null || rm > newBest) newBest = rm;
+    });
+    if(newBest != null && newBest > prev + 0.01){
+      return {cvik: rec.cvik, rm: newBest, prev: prev};
+    }
+    return null;
+  }
 
   gymCancelEditBtn.addEventListener("click", resetGymForm);
 
@@ -291,6 +337,194 @@
       renderGym();
     });
   }
+
+  // ---------- workout templates ----------
+  var TPL_KEY = "gym_sablony_v1";
+  var tplListEl = document.getElementById("tplList");
+  var tplEditorEl = document.getElementById("tplEditor");
+  var tplNazevEl = document.getElementById("tpl_nazev");
+  var tplRowsEl = document.getElementById("tplRows");
+  var tplQueueBarEl = document.getElementById("tplQueueBar");
+  var tplEditingId = null;
+  var tplQueue = null;
+
+  function loadTpls(){
+    try{
+      var raw = localStorage.getItem(TPL_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveTpls(){
+    try{ localStorage.setItem(TPL_KEY, JSON.stringify(tpls)); }catch(e){}
+  }
+  var tpls = loadTpls();
+
+  function loggedExerciseNames(){
+    return Array.from(new Set(gymData.map(function(r){return r.cvik;}).filter(Boolean)));
+  }
+
+  function addTplRow(cvik){
+    var row = document.createElement("div");
+    row.className = "tpl-row";
+    row.innerHTML =
+      "<span class=\"tpl-num\"></span>"+
+      "<div><select class=\"tpl-select\"></select>"+
+      "<input type=\"text\" class=\"tpl-custom\" placeholder=\"Název cviku\" style=\"display:none;\" /></div>"+
+      "<button type=\"button\" class=\"ghost small tpl-remove\">✕</button>";
+    var sel = row.querySelector(".tpl-select");
+    var custom = row.querySelector(".tpl-custom");
+    sel.innerHTML = buildCvikOptions(loggedExerciseNames());
+    sel.addEventListener("change", function(){
+      var isCustom = sel.value === CUSTOM_CVIK;
+      custom.style.display = isCustom ? "block" : "none";
+      if(isCustom) custom.focus();
+    });
+    if(cvik){
+      var matched = Array.from(sel.options).some(function(o){ return o.value === cvik; });
+      if(matched){ sel.value = cvik; }
+      else { sel.value = CUSTOM_CVIK; custom.style.display = "block"; custom.value = cvik; }
+    }
+    row.querySelector(".tpl-remove").addEventListener("click", function(){
+      row.remove();
+      renumberTplRows();
+    });
+    tplRowsEl.appendChild(row);
+    renumberTplRows();
+  }
+  function renumberTplRows(){
+    Array.from(tplRowsEl.children).forEach(function(row,i){
+      row.querySelector(".tpl-num").textContent = "#"+(i+1);
+    });
+  }
+  function tplRowValue(row){
+    var sel = row.querySelector(".tpl-select");
+    if(sel.value === CUSTOM_CVIK) return row.querySelector(".tpl-custom").value.trim();
+    return sel.value;
+  }
+
+  function openTplEditor(tpl){
+    tplEditingId = tpl ? tpl.id : null;
+    tplNazevEl.value = tpl ? tpl.nazev : "";
+    tplRowsEl.innerHTML = "";
+    var cviky = tpl && tpl.cviky.length ? tpl.cviky : [null];
+    cviky.forEach(function(c){ addTplRow(c); });
+    tplEditorEl.style.display = "block";
+    tplNazevEl.focus();
+  }
+  function closeTplEditor(){
+    tplEditorEl.style.display = "none";
+    tplEditingId = null;
+  }
+
+  document.getElementById("btnNewTpl").addEventListener("click", function(){ openTplEditor(null); });
+  document.getElementById("btnTplAddCvik").addEventListener("click", function(){ addTplRow(); });
+  document.getElementById("btnTplCancel").addEventListener("click", closeTplEditor);
+
+  document.getElementById("btnTplSave").addEventListener("click", function(){
+    var nazev = tplNazevEl.value.trim();
+    var cviky = Array.from(tplRowsEl.children).map(tplRowValue).filter(Boolean);
+    if(!nazev){ tplNazevEl.focus(); return; }
+    if(!cviky.length){ return; }
+    if(tplEditingId){
+      var idx = tpls.findIndex(function(t){return t.id===tplEditingId;});
+      if(idx>-1) tpls[idx] = {id:tplEditingId, nazev:nazev, cviky:cviky};
+    } else {
+      tpls.push({id:uid(), nazev:nazev, cviky:cviky});
+    }
+    saveTpls();
+    closeTplEditor();
+    renderTplList();
+  });
+
+  function deleteTpl(id){
+    var removed = tpls.find(function(t){return t.id===id;});
+    if(!removed) return;
+    tpls = tpls.filter(function(t){return t.id!==id;});
+    saveTpls();
+    renderTplList();
+    showUndoToast("Šablona smazána.", function(){
+      tpls.push(removed);
+      saveTpls();
+      renderTplList();
+    });
+  }
+
+  function renderTplList(){
+    if(!tpls.length){
+      tplListEl.innerHTML = "<div class=\"hint\" style=\"padding:4px 0 10px;\">Zatím žádné šablony. Ulož si sestavu cviků (např. Upper A) a v gymu ji spustíš jedním klepnutím.</div>";
+      return;
+    }
+    tplListEl.innerHTML = "";
+    tpls.forEach(function(t){
+      var item = document.createElement("div");
+      item.className = "tpl-item";
+      item.innerHTML =
+        "<div class=\"tpl-info\"><div class=\"tpl-name\">"+esc(t.nazev)+"</div>"+
+        "<div class=\"tpl-cviky\">"+esc(t.cviky.join(" · "))+"</div></div>"+
+        "<div class=\"tpl-actions\"></div>";
+      var actions = item.querySelector(".tpl-actions");
+      var useBtn = document.createElement("button");
+      useBtn.className = "ghost small"; useBtn.textContent = "Použít";
+      useBtn.style.color = "var(--accent-strong)"; useBtn.style.borderColor = "var(--accent)";
+      useBtn.addEventListener("click", function(){ applyTpl(t); });
+      var editBtn = document.createElement("button");
+      editBtn.className = "ghost small"; editBtn.textContent = "Upravit";
+      editBtn.addEventListener("click", function(){ openTplEditor(t); });
+      var delBtn = document.createElement("button");
+      delBtn.className = "ghost small"; delBtn.textContent = "✕";
+      delBtn.style.color = "var(--danger)";
+      delBtn.addEventListener("click", function(){ deleteTpl(t.id); });
+      actions.appendChild(useBtn);
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      tplListEl.appendChild(item);
+    });
+  }
+
+  function updateTplQueueBar(){
+    if(!tplQueue){ tplQueueBarEl.style.display = "none"; return; }
+    var cur = tplQueue.cviky[tplQueue.idx];
+    var next = tplQueue.cviky.slice(tplQueue.idx+1);
+    tplQueueBarEl.innerHTML =
+      "<div class=\"q-info\"><div class=\"q-title\">"+esc(tplQueue.nazev)+" · cvik "+(tplQueue.idx+1)+"/"+tplQueue.cviky.length+": "+esc(cur)+"</div>"+
+      (next.length ? "<div class=\"q-next\">Další: "+esc(next.join(", "))+"</div>" : "<div class=\"q-next\">Poslední cvik šablony.</div>")+
+      "</div>";
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button"; cancelBtn.className = "ghost";
+    cancelBtn.textContent = "Zrušit";
+    cancelBtn.addEventListener("click", function(){
+      tplQueue = null;
+      updateTplQueueBar();
+    });
+    tplQueueBarEl.appendChild(cancelBtn);
+    tplQueueBarEl.style.display = "flex";
+  }
+
+  function applyTpl(t){
+    if(!t.cviky.length) return;
+    tplQueue = {nazev: t.nazev, cviky: t.cviky.slice(), idx: 0};
+    resetGymForm();
+    setCvikValue(tplQueue.cviky[0]);
+    updateTplQueueBar();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function advanceTplQueue(){
+    if(!tplQueue) return;
+    tplQueue.idx++;
+    if(tplQueue.idx >= tplQueue.cviky.length){
+      var nazev = tplQueue.nazev;
+      tplQueue = null;
+      updateTplQueueBar();
+      showInfoToast("Šablona "+nazev+" dokončena 💪");
+    } else {
+      setCvikValue(tplQueue.cviky[tplQueue.idx]);
+      updateTplQueueBar();
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+  }
+
+  renderTplList();
 
   // ---------- table ----------
   var gymTbody = document.getElementById("gymTbody");
