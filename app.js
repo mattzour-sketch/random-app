@@ -345,6 +345,7 @@
     updateGymBulkToolbar();
 
     updateExerciseDatalist(sorted);
+    renderGymWeekly(sorted);
     renderPRs(sorted);
     renderGymChart(sorted);
   }
@@ -385,6 +386,45 @@
     if(chartNames.length){
       exSelect.value = chartNames.indexOf(prevSelected)>-1 ? prevSelected : chartNames[chartNames.length-1];
     }
+  }
+
+  // ---------- weekly training summary ----------
+  function weekKeyAndLabel(datum){
+    var d = new Date(datum+"T00:00:00");
+    var day = (d.getDay()+6)%7;
+    d.setDate(d.getDate()-day);
+    var end = new Date(d); end.setDate(end.getDate()+6);
+    var key = toLocalISO(d);
+    var label = fmtDate(key).slice(0,5) + "–" + fmtDate(toLocalISO(end));
+    return {key:key, label:label};
+  }
+
+  function renderGymWeekly(sorted){
+    var body = document.getElementById("gymWeeklyBody");
+    var emptyEl = document.getElementById("gymWeeklyEmpty");
+    var withDate = sorted.filter(function(r){return r.datum;});
+    if(!withDate.length){ body.innerHTML=""; emptyEl.style.display="block"; return; }
+
+    var groups = {};
+    var order = [];
+    withDate.forEach(function(r){
+      var kl = weekKeyAndLabel(r.datum);
+      if(!groups[kl.key]){ groups[kl.key] = {label:kl.label, days:{}, entries:0, volume:0}; order.push(kl.key); }
+      var g = groups[kl.key];
+      g.days[r.datum] = true;
+      g.entries++;
+      g.volume += serieVolume(r.serie||[]);
+    });
+    order.sort().reverse();
+
+    emptyEl.style.display = "none";
+    body.innerHTML = order.map(function(key){
+      var g = groups[key];
+      return "<tr><td>"+g.label+"</td>"+
+        "<td>"+Object.keys(g.days).length+"</td>"+
+        "<td>"+g.entries+"</td>"+
+        "<td>"+(g.volume ? Math.round(g.volume).toLocaleString("cs-CZ")+" kg" : "–")+"</td></tr>";
+    }).join("");
   }
 
   // ---------- export ----------
