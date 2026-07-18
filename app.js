@@ -61,6 +61,32 @@
   });
   applyTheme();
 
+  // ---------- collapsible sections ----------
+  var LAYOUT_KEY = "gym_layout_v1";
+  (function setupCollapsibleSections(){
+    var root = document.getElementById("sectionsRoot");
+    if(!root) return;
+    var collapsed = {};
+    try{
+      var raw = localStorage.getItem(LAYOUT_KEY);
+      collapsed = raw ? JSON.parse(raw) : {};
+    }catch(e){}
+    function persist(){
+      try{ localStorage.setItem(LAYOUT_KEY, JSON.stringify(collapsed)); }catch(e){}
+    }
+    root.querySelectorAll(".app-section").forEach(function(section){
+      var id = section.getAttribute("data-section-id");
+      if(collapsed[id]) section.classList.add("collapsed");
+      var btn = section.querySelector(".collapse-btn");
+      if(!btn) return;
+      btn.addEventListener("click", function(){
+        var isCollapsed = section.classList.toggle("collapsed");
+        collapsed[id] = isCollapsed;
+        persist();
+      });
+    });
+  })();
+
   // ---------- undo toast ----------
   var toastEl = document.getElementById("toast");
   var toastMsgEl = document.getElementById("toastMsg");

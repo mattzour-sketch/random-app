@@ -20,8 +20,14 @@
     <button type="button" class="ghost small" id="themeToggleBtn">☀ Světlý</button>
   </header>
 
-  <section class="card">
-    <h2 id="gymFormTitle">Nový záznam</h2>
+  <div class="sections" id="sectionsRoot">
+
+  <section class="card app-section" data-section-id="form">
+    <div class="section-header">
+      <h2 id="gymFormTitle">Nový záznam</h2>
+      <button type="button" class="collapse-btn" title="Sbalit/rozbalit">⌄</button>
+    </div>
+    <div class="section-body">
     <div id="tplQueueBar" style="display:none;"></div>
     <form id="gymForm">
       <label>Datum</label>
@@ -43,10 +49,15 @@
         <button type="button" class="ghost" id="gymCancelEditBtn" style="display:none;">Zrušit úpravu</button>
       </div>
     </form>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Šablony tréninků</h2>
+  <section class="card app-section" data-section-id="templates">
+    <div class="section-header">
+      <h2>Šablony tréninků</h2>
+      <button type="button" class="collapse-btn" title="Sbalit/rozbalit">⌄</button>
+    </div>
+    <div class="section-body">
     <div id="tplList"></div>
     <button type="button" class="ghost small" id="btnNewTpl">+ Nová šablona</button>
     <div id="tplEditor" style="display:none; margin-top:12px;">
@@ -60,10 +71,15 @@
         <button type="button" class="ghost" id="btnTplCancel">Zrušit</button>
       </div>
     </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Historie <span class="count" id="gymRowCount"></span></h2>
+  <section class="card app-section" data-section-id="history">
+    <div class="section-header">
+      <h2>Historie <span class="count" id="gymRowCount"></span></h2>
+      <button type="button" class="collapse-btn" title="Sbalit/rozbalit">⌄</button>
+    </div>
+    <div class="section-body">
     <div class="toolbar">
       <button class="ghost small" id="gymBtnShare">Sdílet zálohu</button>
       <button class="ghost small" id="gymBtnExport">Export CSV</button>
@@ -82,10 +98,15 @@
       </table>
     </div>
     <div class="empty" id="gymEmptyMsg" style="display:none;">Zatím žádné záznamy. Zadej první nahoře.</div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Týdenní souhrn</h2>
+  <section class="card app-section" data-section-id="weekly">
+    <div class="section-header">
+      <h2>Týdenní souhrn</h2>
+      <button type="button" class="collapse-btn" title="Sbalit/rozbalit">⌄</button>
+    </div>
+    <div class="section-body">
     <div class="table-wrap">
       <table id="gymWeeklyTable">
         <thead>
@@ -95,10 +116,15 @@
       </table>
     </div>
     <div class="empty" id="gymWeeklyEmpty" style="display:none;">Zatím žádná data pro souhrn.</div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Tělo (pro odhad síly)</h2>
+  <section class="card app-section" data-section-id="body">
+    <div class="section-header">
+      <h2>Tělo (pro odhad síly)</h2>
+      <button type="button" class="collapse-btn" title="Sbalit/rozbalit">⌄</button>
+    </div>
+    <div class="section-body">
     <label>Pohlaví</label>
     <select id="bp_pohlavi">
       <option value="muz">Muž</option>
@@ -109,10 +135,15 @@
     <div class="actions-row">
       <button type="button" class="ghost small" id="btnSaveBody">Uložit</button>
     </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Osobní rekordy</h2>
+  <section class="card app-section" data-section-id="prs">
+    <div class="section-header">
+      <h2>Osobní rekordy</h2>
+      <button type="button" class="collapse-btn" title="Sbalit/rozbalit">⌄</button>
+    </div>
+    <div class="section-body">
     <div class="table-wrap">
       <table id="prTable">
         <thead>
@@ -123,17 +154,25 @@
     </div>
     <div class="empty" id="prEmptyMsg" style="display:none;">Zatím žádná data pro rekordy.</div>
     <div class="hint" style="margin-top:10px; font-size:11px; color:var(--muted);">"Odhad síly" u dřepu, bench pressu, mrtvého tahu a tlaku nad hlavu je orientační srovnání s benchmarky Tima Henriquese (Decent/Good/Great podle tělesné váhy a pohlaví) — ne vědecky odvozený percentil populace.</div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Progres cviku</h2>
+  <section class="card app-section" data-section-id="chart">
+    <div class="section-header">
+      <h2>Progres cviku</h2>
+      <button type="button" class="collapse-btn" title="Sbalit/rozbalit">⌄</button>
+    </div>
+    <div class="section-body">
     <div class="toolbar" style="margin-bottom:10px;">
       <select id="gymChartExercise" style="max-width:180px;"></select>
       <button class="ghost small gym-metric-btn active" data-gym-metric="top">Nejtěžší série</button>
       <button class="ghost small gym-metric-btn" data-gym-metric="volume">Objem</button>
     </div>
     <div class="chart-wrap" id="gymChartWrap"></div>
+    </div>
   </section>
+
+  </div>
 
   <div class="toast" id="toast" style="display:none;">
     <span id="toastMsg"></span>
