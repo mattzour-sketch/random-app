@@ -168,12 +168,12 @@
   var CUSTOM_CVIK = "__custom__";
 
   var EXERCISE_GROUPS = {
-    "Prsa": ["Bench press", "Incline bench press", "Decline bench press", "Dumbbell press", "Incline dumbbell press", "Chest fly", "Cable fly", "Push-up"],
-    "Záda": ["Deadlift", "Romanian deadlift", "T-bar row", "Barbell row", "Dumbbell row", "Lat pulldown", "Pull-up", "Seated cable row"],
-    "Ramena": ["Overhead press", "Shoulder press", "Lateral raise", "Front raise", "Rear delt fly", "Shrugs"],
-    "Nohy": ["Squat", "Leg press", "Leg extension", "Leg curl", "Lunges", "Bulgarian split squat", "Calf raise", "Hip thrust"],
-    "Ruce": ["Biceps curl", "Hammer curl", "Triceps pushdown", "Triceps extension", "Dips"],
-    "Core": ["Plank", "Crunches"]
+    "Prsa": ["Bench press", "Incline bench press", "Decline bench press", "Close-grip bench press", "Dumbbell press", "Incline dumbbell press", "Chest fly", "Cable fly", "Cable crossover", "Pec deck", "Push-up", "Dumbbell pullover"],
+    "Záda": ["Deadlift", "Sumo deadlift", "Romanian deadlift", "Rack pull", "Good morning", "T-bar row", "Barbell row", "Pendlay row", "Dumbbell row", "Chest-supported row", "Meadows row", "Lat pulldown", "Pull-up", "Chin-up", "Seated cable row", "Straight-arm pulldown", "Face pull", "Inverted row"],
+    "Ramena": ["Overhead press", "Shoulder press", "Arnold press", "Push press", "Lateral raise", "Cable lateral raise", "Front raise", "Rear delt fly", "Reverse pec deck", "Upright row", "Shrugs", "Cuban press"],
+    "Nohy": ["Squat", "Front squat", "Hack squat", "Goblet squat", "Sumo squat", "Leg press", "Leg extension", "Leg curl", "Lunges", "Walking lunges", "Bulgarian split squat", "Step-up", "Hip thrust", "Glute bridge", "Calf raise", "Seated calf raise", "Box jump"],
+    "Ruce": ["Biceps curl", "Hammer curl", "Preacher curl", "Concentration curl", "Cable curl", "Spider curl", "Reverse curl", "Triceps pushdown", "Overhead triceps extension", "Skull crusher", "Triceps kickback", "Dips", "Close-grip push-up", "Farmer's carry"],
+    "Core": ["Plank", "Side plank", "Crunches", "Cable crunch", "Sit-up", "Russian twist", "Hanging leg raise", "Leg raise", "Ab wheel", "Mountain climber"]
   };
   var GROUP_ORDER = ["Prsa", "Záda", "Ramena", "Nohy", "Ruce", "Core"];
 
