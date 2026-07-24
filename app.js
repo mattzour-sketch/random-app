@@ -606,6 +606,7 @@
 
     updateExerciseDatalist(sorted);
     renderGymWeekly(sorted);
+    renderGroupVolume(sorted);
     renderPRs(sorted);
     renderGymChart(sorted);
   }
@@ -646,6 +647,68 @@
     if(chartNames.length){
       exSelect.value = chartNames.indexOf(prevSelected)>-1 ? prevSelected : chartNames[chartNames.length-1];
     }
+  }
+
+  // ---------- volume per muscle group ----------
+  var EXERCISE_TO_GROUP = (function(){
+    var map = {};
+    GROUP_ORDER.forEach(function(g){
+      EXERCISE_GROUPS[g].forEach(function(name){ map[name.toLowerCase()] = g; });
+    });
+    return map;
+  })();
+  var grpRangeDays = 7;
+  document.querySelectorAll(".grp-range-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      grpRangeDays = parseInt(btn.getAttribute("data-grp-range"), 10);
+      document.querySelectorAll(".grp-range-btn").forEach(function(b){ b.classList.toggle("active", b===btn); });
+      renderGroupVolume(sortedGym());
+    });
+  });
+
+  function renderGroupVolume(sorted){
+    var wrap = document.getElementById("groupVolumeWrap");
+    if(!wrap) return;
+    var cutoff = new Date(); cutoff.setDate(cutoff.getDate()-grpRangeDays);
+    var cutoffISO = toLocalISO(cutoff);
+    var recent = sorted.filter(function(r){ return r.datum >= cutoffISO; });
+
+    var totals = {};
+    GROUP_ORDER.forEach(function(g){ totals[g] = 0; });
+    var unknownVolume = 0;
+    recent.forEach(function(r){
+      var vol = serieVolume(r.serie||[]);
+      if(!vol) return;
+      var g = EXERCISE_TO_GROUP[(r.cvik||"").trim().toLowerCase()];
+      if(g) totals[g] += vol;
+      else unknownVolume += vol;
+    });
+
+    var max = Math.max.apply(null, GROUP_ORDER.map(function(g){ return totals[g]; }));
+    if(max <= 0){
+      wrap.innerHTML = "<div class=\"empty\">Za posledních "+grpRangeDays+" dní žádný objem k rozdělení.</div>";
+      return;
+    }
+
+    var html = GROUP_ORDER.map(function(g){
+      var v = totals[g];
+      var pct = max ? Math.round((v/max)*100) : 0;
+      var zero = v === 0;
+      return "<div class=\"grp-row\">"+
+        "<div class=\"grp-head\"><span class=\"grp-name\">"+esc(g)+"</span>"+
+        "<span class=\"grp-val"+(zero?" zero":"")+"\">"+(zero ? "0 kg" : Math.round(v).toLocaleString("cs-CZ")+" kg")+"</span></div>"+
+        "<div class=\"grp-bar\"><div class=\"grp-bar-fill"+(zero?" zero":"")+"\" style=\"width:"+Math.max(pct, zero?0:2)+"%;\"></div></div>"+
+        "</div>";
+    }).join("");
+
+    var skipped = GROUP_ORDER.filter(function(g){ return totals[g] === 0; });
+    if(skipped.length){
+      html += "<div class=\"hint\" style=\"margin-top:10px;\">Bez objemu za "+grpRangeDays+" dní: "+skipped.join(", ")+".</div>";
+    }
+    if(unknownVolume > 0){
+      html += "<div class=\"hint\" style=\"margin-top:6px;\">Vlastní cviky mimo partie: "+Math.round(unknownVolume).toLocaleString("cs-CZ")+" kg.</div>";
+    }
+    wrap.innerHTML = html;
   }
 
   // ---------- weekly training summary ----------

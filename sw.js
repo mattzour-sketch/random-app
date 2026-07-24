@@ -1,4 +1,4 @@
-var CACHE_NAME = "gym-progress-v10";
+var CACHE_NAME = "gym-progress-v11";
 var SHELL = [
   "./",
   "./index.html",
